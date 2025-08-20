@@ -3,6 +3,12 @@ import { fetchQuestions } from '@/actions/fetchQuestions';
 import { Question } from '@/types/global';
 import { useEffect, useState } from 'react';
 
+interface QuestionsUpdateEvent {
+    data: Question[];
+    id: string;
+    type: 'questions-update';
+}
+
 export default function QuestionsComponent({ sessionId }: { sessionId: string }) {
     const [questions, setQuestions] = useState<Question[]>([]);
 
@@ -16,6 +22,43 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
         };
         fetchData();
     }, [sessionId]);
+
+    useEffect(() => {
+        const eventSource = new EventSource(`${process.env.NEXT_PUBLIC_API_URL}/questions/${sessionId}/events`);
+
+        // eventSource.onmessage = (event) => {
+        //     const questionEvent: QuestionEvent = JSON.parse(event.data);
+        //     console.log('Received SSE:', questionEvent);
+        //     if (questionEvent.type !== 'questions-update') return;
+
+        //     const questionToUpdate = questionEvent.data[0];
+        //     setQuestions((prev) => prev.map((q) => (q.id === questionToUpdate.id ? questionToUpdate : q)));
+        // };
+        eventSource.addEventListener('questions-update', (event: MessageEvent) => {
+            // console.log('Received SSE custom event "questions-update":', event);
+            console.log('Received SSE custom event "questions-update"');
+            try {
+                const questionsToUpdate = JSON.parse(event.data) as Question[];
+                console.log("Likes:", questionsToUpdate.map(q => q.likes));
+                setQuestions((prev) => prev.map((q) => {
+                    const updatedQuestion = questionsToUpdate.find((uq) => uq.id === q.id);
+                    return updatedQuestion ? updatedQuestion : q;
+                }));
+
+            } catch (error) {
+                console.error('Error parsing SSE data:', error);
+            }
+        });
+
+        eventSource.onerror = (err) => {
+            console.error('SSE error:', err);
+            eventSource.close();
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    }, []);
 
     if (!questions || questions.length === 0) {
         return <div>No questions found for this session.</div>;

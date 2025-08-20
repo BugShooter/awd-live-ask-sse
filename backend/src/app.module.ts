@@ -4,9 +4,15 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Session } from './entities/session.entity';
 import { QuestionsModule } from './questions/questions.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    // npm install @nestjs/config
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env.local', // 👈 явно указали
+    }),
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'database.sqlite',
@@ -20,4 +26,4 @@ import { QuestionsModule } from './questions/questions.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
