@@ -1,10 +1,19 @@
-import { Controller, Get, Post, Delete, Put, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Put,
+  Param,
+  Body,
+  NotFoundException,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { Session } from './entities/session.entity';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) { }
+  constructor(private readonly appService: AppService) {}
 
   @Get()
   async getAllSessions(): Promise<Session[]> {
@@ -17,7 +26,9 @@ export class AppController {
   }
 
   @Post()
-  async createSession(@Body() session: Partial<Session>): Promise<Session | null> {
+  async createSession(
+    @Body() session: Partial<Session>,
+  ): Promise<Session | null> {
     return await this.appService.createSession(session);
   }
 
@@ -30,7 +41,10 @@ export class AppController {
   }
 
   @Delete(':id')
-  async deleteSession(@Param('id') id: string): Promise<Session | null> {
-    return await this.appService.deleteSession(id);
+  async deleteSession(@Param('id') id: string): Promise<void> {
+    const isDeleted = await this.appService.deleteSession(id);
+    if (!isDeleted) {
+      throw new NotFoundException(`Could not find session with id: ${id}`);
+    }
   }
 }
