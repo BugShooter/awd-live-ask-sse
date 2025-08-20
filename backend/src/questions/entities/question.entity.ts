@@ -6,7 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
 } from 'typeorm';
-import { Session } from './session.entity';
+import { Session } from '../../entities/session.entity';
 
 @Entity()
 export class Question {
@@ -24,6 +24,9 @@ export class Question {
   })
   @JoinColumn({ name: 'sessionId' })
   session: Session;
+
+  @Column()
+  sessionId: string;
 
   @Column({ default: false })
   answered: boolean;
