@@ -1,7 +1,9 @@
 'use client';
 import { fetchQuestions } from '@/actions/fetchQuestions';
+import { likeQuestion } from './likeQuestion';
 import { Question } from '@/types/global';
 import { useEffect, useState } from 'react';
+import AddQuestion from './AddQuestion';
 
 interface QuestionsUpdateEvent {
     data: Question[];
@@ -50,6 +52,17 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
             }
         });
 
+        eventSource.addEventListener('questions-create', (event: MessageEvent) => {
+            // console.log('Received SSE custom event "questions-update":', event);
+            console.log('Received SSE custom event "questions-create"');
+            try {
+                const questionsToUpdate = JSON.parse(event.data) as Question[];
+                setQuestions((prev) => [ ...prev, ...questionsToUpdate]);
+            } catch (error) {
+                console.error('Error parsing SSE data:', error);
+            }
+        });
+
         eventSource.onerror = (err) => {
             console.error('SSE error:', err);
             eventSource.close();
@@ -64,13 +77,23 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
         return <div>No questions found for this session.</div>;
     }
 
+    const handleClick = async (event, questionId) => {
+        event.preventDefault();
+        console.log(questionId);
+        const result = await likeQuestion(questionId);
+        console.log('Like result', result);
+    }
+
     return (
-        <ul>
-            {questions.map(question => (
-                <li key={question.id}>
-                    Id: {question.id} - Title: {question.title} - <button>Likes</button>: {question.likes}
-                </li>
-            ))}
-        </ul>
+        <>
+            <ul>
+                {questions.map(question => (
+                    <li key={question.id}>
+                        Id: {question.id} - Title: {question.title} - <button onClick={(event) => handleClick(event, question.id)}>Likes</button>: {question.likes}
+                    </li>
+                ))}
+            </ul>
+            <AddQuestion sessionId={sessionId} />
+            </>
     );
 }

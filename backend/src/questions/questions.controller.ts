@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Sse,
+  NotFoundException,
 } from '@nestjs/common';
 import { Observable, Subject } from 'rxjs';
 import { QuestionsService } from './questions.service';
@@ -29,8 +30,13 @@ export class QuestionsController {
   }
 
   @Post()
-  create(@Body() createQuestionDto: CreateQuestionDto) {
-    return this.questionsService.create(createQuestionDto);
+  async create(@Body() createQuestionDto: CreateQuestionDto): Promise<Question> {
+    const question = await this.questionsService.create(createQuestionDto);
+    const messageEvent = new MessageEvent('questions-create', {
+      data: [question],
+    });
+    this.subject.next(messageEvent);
+    return question;
   }
 
   @Get(':sessionId')
@@ -60,11 +66,15 @@ export class QuestionsController {
     @Param('id') id: string,
     @Body() updateQuestionDto: UpdateQuestionDto,
   ) {
-    const updatedQuestion = await this.questionsService.update(id, updateQuestionDto);
+    const updatedQuestion = await this.questionsService.update(
+      id,
+      updateQuestionDto,
+    );
+    if (!updatedQuestion) {
+      throw new NotFoundException(`Question with id ${id} not found`);
+    }
     const messageEvent = new MessageEvent('questions-update', {
       data: [updatedQuestion],
-      // id: Date.now().toString(),
-      // type: 'questions-update',
     });
     this.subject.next(messageEvent);
     return updatedQuestion;

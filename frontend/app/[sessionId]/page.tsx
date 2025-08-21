@@ -8,9 +8,11 @@ export default async function Session({
   const { sessionId } = await params;
 
   return (
-    <div>
-      <h2>Questions for session: {sessionId}</h2>
-      <QuestionsComponent sessionId={sessionId} />
-    </div>
+    <>
+      <div>
+        <h2>Questions for session: {sessionId}</h2>
+        <QuestionsComponent sessionId={sessionId} />
+      </div>
+    </>
   );
 }
