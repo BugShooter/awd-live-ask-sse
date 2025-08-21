@@ -28,13 +28,14 @@ export class QuestionsService {
   }
 
   async update(id: string, updateQuestionDto: UpdateQuestionDto) {
-    const question = await this.questionRepository.findOneBy({ id });
+    let question = await this.questionRepository.findOneBy({ id });
     if (!question) {
       throw new NotFoundException(`Could not find question with id: ${id}`);
     }
 
     await this.questionRepository.increment({ id }, 'likes', 1);
 
+    question = await this.questionRepository.findOneBy({ id });
     // await this.userRepository
     //   .createQueryBuilder()
     //   .update(User)
@@ -42,7 +43,7 @@ export class QuestionsService {
     //   .where("id = :id", { id: userId })
     //   .execute();
 
-    return `This action updates a #${id} question`;
+    return [question];
   }
 
   async remove(id: string) {

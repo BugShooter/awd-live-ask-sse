@@ -8,7 +8,7 @@ import {
   Delete,
   Sse,
 } from '@nestjs/common';
-import { Observable, interval, map, switchMap, startWith } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
@@ -22,7 +22,11 @@ interface QuestionEvent {
 
 @Controller('questions')
 export class QuestionsController {
-  constructor(private readonly questionsService: QuestionsService) {}
+  private subject: Subject<MessageEvent>;
+
+  constructor(private readonly questionsService: QuestionsService) {
+    this.subject = new Subject<MessageEvent>();
+  }
 
   @Post()
   create(@Body() createQuestionDto: CreateQuestionDto) {
@@ -37,17 +41,13 @@ export class QuestionsController {
   @Sse(':sessionId/events')
   questionsStream(
     @Param('sessionId') sessionId: string,
-  ): Observable<QuestionEvent> {
-    return interval(2000).pipe(
-      // Poll every 2 seconds
-      startWith(0), // Emit immediately when client connects
-      switchMap(() => this.questionsService.findAll(sessionId)),
-      map((questions) => ({
-        data: questions,
-        id: Date.now().toString(),
-        type: 'questions-update',
-      })),
-    );
+  ): Observable<MessageEvent> {
+    const messageEvent = new MessageEvent('message', {
+      data: `data: ${sessionId}\n\n`,
+    });
+    this.subject.next(messageEvent);
+
+    return this.subject.asObservable();
   }
 
   @Get(':id')
@@ -56,11 +56,18 @@ export class QuestionsController {
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateQuestionDto: UpdateQuestionDto,
   ) {
-    return this.questionsService.update(id, updateQuestionDto);
+    const updatedQuestion = await this.questionsService.update(id, updateQuestionDto);
+    const messageEvent = new MessageEvent('questions-update', {
+      data: [updatedQuestion],
+      // id: Date.now().toString(),
+      // type: 'questions-update',
+    });
+    this.subject.next(messageEvent);
+    return updatedQuestion;
   }
 
   @Delete(':id')
