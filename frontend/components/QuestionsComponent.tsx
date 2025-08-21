@@ -5,14 +5,9 @@ import { Question } from '@/types/global';
 import { useEffect, useState } from 'react';
 import AddQuestion from './AddQuestion';
 
-interface QuestionsUpdateEvent {
-    data: Question[];
-    id: string;
-    type: 'questions-update';
-}
-
 export default function QuestionsComponent({ sessionId }: { sessionId: string }) {
     const [questions, setQuestions] = useState<Question[]>([]);
+    const [loading, setLoading] = useState(true);
 
     // Fetch questions when the component mounts or sessionId changes
     // from server side
@@ -20,7 +15,8 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
     useEffect(() => {
         const fetchData = async () => {
             const data = await fetchQuestions(sessionId);
-            setQuestions(data);
+            setQuestions(data.sort((a, b) => b.likes - a.likes));
+            setLoading(false);
         };
         fetchData();
     }, [sessionId]);
@@ -28,20 +24,10 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
     useEffect(() => {
         const eventSource = new EventSource(`${process.env.NEXT_PUBLIC_API_URL}/questions/${sessionId}/events`);
 
-        // eventSource.onmessage = (event) => {
-        //     const questionEvent: QuestionEvent = JSON.parse(event.data);
-        //     console.log('Received SSE:', questionEvent);
-        //     if (questionEvent.type !== 'questions-update') return;
-
-        //     const questionToUpdate = questionEvent.data[0];
-        //     setQuestions((prev) => prev.map((q) => (q.id === questionToUpdate.id ? questionToUpdate : q)));
-        // };
         eventSource.addEventListener('questions-update', (event: MessageEvent) => {
-            // console.log('Received SSE custom event "questions-update":', event);
             console.log('Received SSE custom event "questions-update"');
             try {
                 const questionsToUpdate = JSON.parse(event.data) as Question[];
-                console.log("Likes:", questionsToUpdate.map(q => q.likes));
                 setQuestions((prev) => prev.map((q) => {
                     const updatedQuestion = questionsToUpdate.find((uq) => uq.id === q.id);
                     return updatedQuestion ? updatedQuestion : q;
@@ -73,6 +59,10 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
         };
     }, []);
 
+    if (loading) {
+        return <div>Loading questions...</div>;
+    }
+
     if (!questions || questions.length === 0) {
         return <div>No questions found for this session.
             New question: <AddQuestion sessionId={sessionId} /></div>;
@@ -81,9 +71,12 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
     const handleClick = async (event, questionId) => {
         event.preventDefault();
         console.log(questionId);
+        event.target.classList.add('liked')
         const result = await likeQuestion(questionId);
         console.log('Like result', result);
     }
+
+
 
     return (
         <>
@@ -94,9 +87,11 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
                             <div className='idContainer'>
                                 Id: {question.id} - Title: {question.title}
                             </div>
-              
+
                             <span className='actions'>
-                                <button onClick={(event) => handleClick(event, question.id)}>Likes</button>: {question.likes}
+                                <button onClick={(event) => handleClick(event, question.id)}>
+                                    Likes
+                                </button>: {question.likes}
                             </span>
                         </li>
                     ))}

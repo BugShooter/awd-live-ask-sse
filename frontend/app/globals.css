@@ -72,6 +72,7 @@ a {
   display: flex;
   flex-direction: row;
   justify-content: space-around;
+  margin: 5px;
 }
 
 .questions .actions {
@@ -79,4 +80,8 @@ a {
   flex-direction: row;
   align-items: center;
   width: 70px;
+}
+
+.liked {
+  background-color: green
 }
