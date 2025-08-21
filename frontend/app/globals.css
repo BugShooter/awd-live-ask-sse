@@ -40,3 +40,43 @@ a {
     color-scheme: dark;
   }
 }
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.questionsWrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.questions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--foreground);
+  width: 50vw;
+}
+
+.idContainer {
+  flex: 1
+}
+
+.questions>li {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.questions .actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 70px;
+}

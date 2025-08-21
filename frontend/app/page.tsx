@@ -1,6 +1,7 @@
 import styles from "./page.module.css";
 import Link from 'next/link';
 import { Session } from "@/types/global";
+import AddSession from '../components/AddSession';
 
 export default async function Home() {
   const allSessions = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/`);
@@ -16,6 +17,7 @@ export default async function Home() {
       </li>
     ))}
     </ul>
+    <AddSession />
    </div> 
   );
 }

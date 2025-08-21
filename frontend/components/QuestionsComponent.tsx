@@ -45,7 +45,7 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
                 setQuestions((prev) => prev.map((q) => {
                     const updatedQuestion = questionsToUpdate.find((uq) => uq.id === q.id);
                     return updatedQuestion ? updatedQuestion : q;
-                }));
+                }).sort((a, b) => b.likes - a.likes));
 
             } catch (error) {
                 console.error('Error parsing SSE data:', error);
@@ -57,7 +57,7 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
             console.log('Received SSE custom event "questions-create"');
             try {
                 const questionsToUpdate = JSON.parse(event.data) as Question[];
-                setQuestions((prev) => [ ...prev, ...questionsToUpdate]);
+                setQuestions((prev) => [...prev, ...questionsToUpdate].sort((a, b) => b.likes - a.likes));
             } catch (error) {
                 console.error('Error parsing SSE data:', error);
             }
@@ -74,7 +74,8 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
     }, []);
 
     if (!questions || questions.length === 0) {
-        return <div>No questions found for this session.</div>;
+        return <div>No questions found for this session.
+            New question: <AddQuestion sessionId={sessionId} /></div>;
     }
 
     const handleClick = async (event, questionId) => {
@@ -86,14 +87,22 @@ export default function QuestionsComponent({ sessionId }: { sessionId: string })
 
     return (
         <>
-            <ul>
-                {questions.map(question => (
-                    <li key={question.id}>
-                        Id: {question.id} - Title: {question.title} - <button onClick={(event) => handleClick(event, question.id)}>Likes</button>: {question.likes}
-                    </li>
-                ))}
-            </ul>
-            <AddQuestion sessionId={sessionId} />
-            </>
+            <div className='questionsWrapper'>
+                <ul className='questions'>
+                    {questions.map(question => (
+                        <li key={question.id}>
+                            <div className='idContainer'>
+                                Id: {question.id} - Title: {question.title}
+                            </div>
+              
+                            <span className='actions'>
+                                <button onClick={(event) => handleClick(event, question.id)}>Likes</button>: {question.likes}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            New question: <AddQuestion sessionId={sessionId} />
+        </>
     );
 }

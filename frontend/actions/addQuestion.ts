@@ -12,8 +12,4 @@ export async function createNewQuestion(sessionId: string, prevState: any,formDa
         headers: new Headers([['Content-Type', 'application/json']]),
         body: JSON.stringify({title: name, sessionId})
     })
-
-    console.log(result);
-
-    //redirect('/'+sessionId);
 }
